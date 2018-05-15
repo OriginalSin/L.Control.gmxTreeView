@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>GeoMixer treeView Example</title>
+	<meta charset="utf-8" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+	}
+    </style>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="css-treeview.css">
+    <link rel="stylesheet" href="scrollbars.css">
+
+
+<!--
+	<script src="./props.js"></script>
+	<link rel="stylesheet" href="dist/geomixer.css" crossorigin=""/>
+	<script src="dist/geomixer-src.js?1508146119421" crossorigin=""></script>
+-->
+	<link rel="stylesheet" href="https://www.kosmosnimki.ru/lib/geomixer_1.3/geomixer.css" crossorigin=""/>
+	<script src="https://www.kosmosnimki.ru/lib/geomixer_1.3/geomixer-src.js?1508146119421" crossorigin=""></script>
+
+	<script src="ext/iconSidebarControl.js" charset="utf-8"></script>
+	<link rel="stylesheet" href="ext/iconSidebarControl.css" charset="utf-8">
+
+	<script src ="./src/L.Control.gmxTreeView.js"></script>
+	<link	href="./src/L.Control.gmxTreeView.css" charset="utf-8" rel="stylesheet">
+
+</head>
+<body>
+
+	<div id="map"></div>
+
+	<script>
+		var osm = L.tileLayer('https://tilessputnik.ru/{z}/{x}/{y}.png', {
+			maxZoom: 18
+        });
+
+		var map = new L.Map('map', {layers: [osm], center: new L.LatLng(0, 60), zoom: 3});
+
+		L.gmx.loadMap('78457D37D4104840B76257C72B931125').then(function(gmxMap) {
+console.log('gmxMap', gmxMap)
+			var iconSidebar = L.control.iconSidebar({width111: 360});
+			map.addControl(iconSidebar);
+			var node = L.DomUtil.create('div', 'treeViewCont'),
+				tabIcon = L.DomUtil.create('div', 'tabIcon', node),
+				tabCont = L.DomUtil.create('div', 'tabCont', node);
+			tabIcon.innerHTML = '<svg role="img" class="svgIcon"><use xlink:href="#s-tree" href="#s-tree"></use></svg>';
+			// putSVGIcon(tabIcon, 's-tree');
+
+			var treePane = iconSidebar.setPane('treeView', {
+				createTab: function(state) {
+					// console.log('treeViewCont', state)
+					if (state === 'active') {
+						L.DomUtil.addClass(node, 'icon_active')
+					} else {
+						L.DomUtil.removeClass(node, 'icon_active')
+					}
+					return node
+				}
+			});
+			var rawTree = gmxMap.rawTree;
+			var gmxTreeView = L.control.gmxTreeView({
+				iconSidebar: iconSidebar,
+				container: treePane,
+				rawTree: rawTree
+			});
+			gmxTreeView
+				.on('centerLayer infoLayer change:expanded change:visible title:click styles:click style:click', function(ev) {
+					var type = ev.type,
+						treeNodeID = ev.treeNodeID,
+						gmxLayer = gmxMap.layersByID[treeNodeID];
+
+					if (gmxLayer) {
+						if (type === 'centerLayer') {
+							map.fitBounds(gmxLayer.getBounds());
+						} else if (type === 'change:visible') {
+							if (ev.checked) {
+								map.addLayer(gmxLayer);
+							} else {
+								map.removeLayer(gmxLayer);
+							}
+						}
+					}
+console.log(ev);
+				});
+		});
+	</script>
+</body>
+</html>
